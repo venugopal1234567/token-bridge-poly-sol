@@ -13,6 +13,8 @@ async function main() {
     // console.log("Bridge Complete:", solToPoly);
     
     console.log("\n🚀 Bridging from Polygon to Solana");
+    //Create token if you dont have
+    //await bridge.createSolanaToken()
     const polyToSol = await bridge.bridgePolygonToSolana(amount);
     console.log("Bridge Complete:", polyToSol);
   } catch (error) {

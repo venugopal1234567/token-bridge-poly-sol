@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
-import { createAssociatedTokenAccount, getMint, burn, mintTo, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { createAssociatedTokenAccount, getMint, burn, mintTo, getOrCreateAssociatedTokenAccount, createMint } from "@solana/spl-token";
 import { SOLANA_CONFIG } from "../config/solana.js";
 import { loadKeypairFromFile } from "../utils/helpers.js";
 
@@ -19,6 +19,19 @@ export class SolanaClient {
     console.log("🔑 Solana Client Initialized");
     console.log(`Admin: ${this.adminKeypair.publicKey.toBase58()}`);
     console.log(`Holder: ${this.holderKeypair.publicKey.toBase58()}`);
+  }
+
+  async createNewToken() {
+    // Step 1: Create a new token mint
+    const tokenMint = await createMint(
+        this.connection,
+        this.adminKeypair,
+        this.adminKeypair.publicKey, // Mint authority
+        this.adminKeypair.publicKey, // Freeze authority
+        9 // Decimals
+    );
+
+    console.log(`✅ Token Mint Created: ${tokenMint.toBase58()}`);
   }
 
   async burnTokens(amount) {

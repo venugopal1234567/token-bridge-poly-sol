@@ -17,6 +17,10 @@ export class BridgeService {
     }
   }
 
+  async createSolanaToken() {
+    await this.solanaClient.createNewToken()
+  }
+
   async bridgeSolanaToPolygon(amount) {
     // Convert amount considering decimals difference
     const polygonAmount = amount * this.decimalsRatio;
