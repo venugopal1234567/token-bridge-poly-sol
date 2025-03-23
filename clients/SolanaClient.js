@@ -1,11 +1,12 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { createAssociatedTokenAccount, getMint, burn, mintTo } from "@solana/spl-token";
+import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { createAssociatedTokenAccount, getMint, burn, mintTo, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
 import { SOLANA_CONFIG } from "../config/solana.js";
 import { loadKeypairFromFile } from "../utils/helpers.js";
 
 export class SolanaClient {
   constructor() {
-    this.connection = new Connection(SOLANA_CONFIG.RPC_URL, "confirmed");
+    const RPC_URL = clusterApiUrl("devnet");
+    this.connection = new Connection(RPC_URL, "confirmed");
     this.mintAddress = new PublicKey(SOLANA_CONFIG.TOKEN_MINT);
     this.decimals = SOLANA_CONFIG.DECIMALS;
     this.adminKeypair = null;
@@ -22,13 +23,14 @@ export class SolanaClient {
 
   async burnTokens(amount) {
     const mintInfo = await getMint(this.connection, this.mintAddress);
-    const holderTokenAccount = await this.getTokenAccount(this.holderKeypair.publicKey);
-    
+    console.log(`Got mint info ${mintInfo.address}`)
+
+    const holderTokenAccount = await this.createTokenAccount(this.mintAddress);
     const burnAmount = amount * Math.pow(10, this.decimals);
     const txSignature = await burn(
       this.connection,
       this.holderKeypair,
-      holderTokenAccount,
+      holderTokenAccount.address,
       this.mintAddress,
       this.holderKeypair,
       burnAmount
@@ -39,14 +41,15 @@ export class SolanaClient {
 
   async mintTokens(amount) {
     const mintInfo = await getMint(this.connection, this.mintAddress);
-    const holderTokenAccount = await this.getTokenAccount(this.holderKeypair.publicKey);
+    console.log(`Got mint info ${mintInfo.address}`)
+    const holderTokenAccount = await this.createTokenAccount(this.mintAddress);
     
     const mintAmount = amount * Math.pow(10, this.decimals);
     const txSignature = await mintTo(
       this.connection,
       this.adminKeypair,
       this.mintAddress,
-      holderTokenAccount,
+      holderTokenAccount.address,
       this.adminKeypair,
       mintAmount
     );
@@ -54,12 +57,13 @@ export class SolanaClient {
     return txSignature;
   }
 
-  async getTokenAccount(owner) {
-    return createAssociatedTokenAccount(
+  async createTokenAccount(mint) {
+    const tokenAccount = await getOrCreateAssociatedTokenAccount(
       this.connection,
       this.adminKeypair,
-      this.mintAddress,
-      owner
-    );
+      mint,
+      this.holderKeypair.publicKey
+    )
+    return tokenAccount
   }
 }
